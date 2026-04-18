@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: 'Fredoka', system-ui, sans-serif;
+  background: linear-gradient(180deg, #fff7ed 0%, #ffe4e6 50%, #e0f2fe 100%);
+  background-attachment: fixed;
+  color: #1f2937;
+  -webkit-font-smoothing: antialiased;
+}
+
+.card {
+  @apply bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-white;
+}
+
+.btn-primary {
+  @apply bg-gradient-to-b from-rose-400 to-pink-500 text-white font-semibold rounded-full px-6 py-3 shadow-md hover:shadow-lg active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-ghost {
+  @apply bg-white/70 hover:bg-white text-gray-700 font-medium rounded-full px-4 py-2 border border-gray-200 transition-all active:scale-95;
+}

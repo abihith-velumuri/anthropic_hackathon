@@ -46,6 +46,27 @@ type PetData = {
   waterGoal: number;
 };
 
+type MorningFeeling = "rested" | "okay" | "groggy" | "stressed";
+
+type MorningData = {
+  date: string;
+  sleepMinutes: number;
+  sleepScore: number;
+  hrv: number;
+  restingHr: number;
+  stages: { deep: number; rem: number; light: number; awake: number };
+  bedtime: string;
+  wakeTime: string;
+  calmScore: number;
+  feeling: MorningFeeling;
+  steps: number;
+  activeMinutes: number;
+  calories: { consumed: number; goal: number };
+  macros: { carbs: number; protein: number; fat: number };
+};
+
+type PlanItem = { label: string; detail: string; delta: Partial<Scores> };
+
 const SPECIES: Record<Species, { label: string; color: string; images: Record<PetImageKey, string> }> = {
   fox: {
     label: "Fox",
@@ -97,6 +118,124 @@ function overallScore(s: Scores) {
   return Math.round(s.food * 0.35 + s.sleep * 0.25 + s.water * 0.2 + s.move * 0.15 + s.calm * 0.05);
 }
 
+const MORNING_VARIANTS: Omit<MorningData, "date">[] = [
+  {
+    sleepMinutes: 7 * 60 + 42,
+    sleepScore: 86,
+    hrv: 64,
+    restingHr: 58,
+    stages: { deep: 92, rem: 108, light: 240, awake: 22 },
+    bedtime: "11:18 PM",
+    wakeTime: "7:00 AM",
+    calmScore: 78,
+    feeling: "rested",
+    steps: 1240,
+    activeMinutes: 8,
+    calories: { consumed: 0, goal: 2100 },
+    macros: { carbs: 0, protein: 0, fat: 0 },
+  },
+  {
+    sleepMinutes: 6 * 60 + 54,
+    sleepScore: 71,
+    hrv: 52,
+    restingHr: 62,
+    stages: { deep: 68, rem: 88, light: 222, awake: 36 },
+    bedtime: "12:06 AM",
+    wakeTime: "7:00 AM",
+    calmScore: 66,
+    feeling: "okay",
+    steps: 640,
+    activeMinutes: 4,
+    calories: { consumed: 0, goal: 2100 },
+    macros: { carbs: 0, protein: 0, fat: 0 },
+  },
+  {
+    sleepMinutes: 5 * 60 + 38,
+    sleepScore: 52,
+    hrv: 38,
+    restingHr: 68,
+    stages: { deep: 42, rem: 58, light: 200, awake: 38 },
+    bedtime: "1:12 AM",
+    wakeTime: "6:50 AM",
+    calmScore: 48,
+    feeling: "groggy",
+    steps: 380,
+    activeMinutes: 2,
+    calories: { consumed: 0, goal: 2100 },
+    macros: { carbs: 0, protein: 0, fat: 0 },
+  },
+  {
+    sleepMinutes: 6 * 60 + 12,
+    sleepScore: 58,
+    hrv: 31,
+    restingHr: 72,
+    stages: { deep: 54, rem: 64, light: 196, awake: 58 },
+    bedtime: "12:48 AM",
+    wakeTime: "7:00 AM",
+    calmScore: 38,
+    feeling: "stressed",
+    steps: 520,
+    activeMinutes: 3,
+    calories: { consumed: 0, goal: 2100 },
+    macros: { carbs: 0, protein: 0, fat: 0 },
+  },
+  {
+    sleepMinutes: 8 * 60 + 6,
+    sleepScore: 92,
+    hrv: 71,
+    restingHr: 55,
+    stages: { deep: 104, rem: 120, light: 244, awake: 18 },
+    bedtime: "10:42 PM",
+    wakeTime: "6:48 AM",
+    calmScore: 82,
+    feeling: "rested",
+    steps: 1860,
+    activeMinutes: 12,
+    calories: { consumed: 0, goal: 2100 },
+    macros: { carbs: 0, protein: 0, fat: 0 },
+  },
+];
+
+function hashDate(iso: string) {
+  let h = 0;
+  for (let i = 0; i < iso.length; i++) h = (h * 31 + iso.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+function generateMorning(date: string): MorningData {
+  const variant = MORNING_VARIANTS[hashDate(date) % MORNING_VARIANTS.length];
+  return { ...variant, date };
+}
+
+const PLANS: Record<MorningFeeling, PlanItem[]> = {
+  rested: [
+    { label: "Ride the good wave", detail: "20-min workout while energy is high", delta: { move: 7 } },
+    { label: "Veggie-forward lunch", detail: "Double the greens today", delta: { food: 6 } },
+    { label: "Keep the rhythm", detail: "Same bedtime tonight — don’t break it", delta: { sleep: 2, calm: 2 } },
+  ],
+  okay: [
+    { label: "Morning light · 5 min", detail: "Sunlight on your face before screens", delta: { sleep: 3, calm: 2 } },
+    { label: "Protein at lunch", detail: "Steadier energy into the afternoon", delta: { food: 4 } },
+    { label: "Walk after dinner", detail: "Ten minutes is enough", delta: { move: 5 } },
+  ],
+  groggy: [
+    { label: "Hydrate before coffee", detail: "16oz water first — it helps more than caffeine", delta: { water: 5 } },
+    { label: "Bright light walk · 5 min", detail: "Resets your circadian clock", delta: { sleep: 3, move: 2 } },
+    { label: "Protein-rich breakfast", detail: "Carbs alone will crash you by 10", delta: { food: 5 } },
+  ],
+  stressed: [
+    { label: "4-7-8 breathing · 3 rounds", detail: "Your HRV is low — this nudges it up", delta: { calm: 6 } },
+    { label: "Screen-free lunch", detail: "Eat away from the desk", delta: { calm: 3, food: 2 } },
+    { label: "Gentle walk · 10 min", detail: "Movement, not intensity", delta: { move: 4, calm: 3 } },
+  ],
+};
+
+function formatSleep(minutes: number) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${h}h ${m.toString().padStart(2, "0")}m`;
+}
+
 function getMood(score: number): Mood {
   if (score >= 90) return "Thriving";
   if (score >= 75) return "Healthy";
@@ -143,6 +282,224 @@ function Pet({ species, mood }: { species: Species; mood: Mood }) {
   );
 }
 
+type DetailMeta = { color: string; dot: string; phrase: string };
+
+function buildInsights(m: MorningData, pet: PetData): { title: string; body: string }[] {
+  const out: { title: string; body: string }[] = [];
+  if (m.feeling === "rested") {
+    out.push({ title: "Strong recovery", body: `HRV landed at ${m.hrv} ms — near your top quartile. Body is primed. Good day to train harder or tackle deep work.` });
+  }
+  if (m.feeling === "groggy") {
+    const deficit = Math.max(15, 480 - m.sleepMinutes);
+    out.push({ title: "Sleep debt is catching up", body: `Only ${formatSleep(m.sleepMinutes)} last night. Move bedtime ${deficit} minutes earlier tonight — don’t try to pay it back with caffeine.` });
+  }
+  if (m.feeling === "stressed") {
+    out.push({ title: "Nervous system is loud", body: `HRV ${m.hrv} ms with resting HR ${m.restingHr} bpm points to strain. Skip the second coffee and get one real walk outside.` });
+  }
+  if (m.stages.rem < 75) {
+    out.push({ title: "Low REM tonight", body: `${m.stages.rem} min of REM (healthy target 90+). Late meals and alcohol hit REM hardest — worth a look if this is a pattern.` });
+  }
+  if (pet.scores.water < 40) {
+    out.push({ title: "Hydration is behind", body: "Water score is low. Front-load a glass before lunch — dehydration drags mood and focus more than people expect." });
+  }
+  if (pet.scores.food < 45) {
+    out.push({ title: "Meals feel off", body: "Food score is trending low. Try one balanced plate today — protein + fiber + color — before grabbing anything else." });
+  }
+  if (out.length < 2) {
+    out.push({ title: "Steady baseline", body: "No flags today. Keep the rhythm — consistency beats spikes." });
+  }
+  return out.slice(0, 3);
+}
+
+function DetailView({ pet, morning, mood, score, meta, onBack }: { pet: PetData; morning: MorningData; mood: Mood; score: number; meta: DetailMeta; onBack: () => void }) {
+  const cals = Math.round(morning.calories.goal * (pet.scores.food / 100) * 0.85);
+  const calPct = Math.min(1, cals / morning.calories.goal);
+  const carbsG = Math.round((cals * 0.5) / 4);
+  const proteinG = Math.round((cals * 0.25) / 4);
+  const fatG = Math.round((cals * 0.25) / 9);
+
+  const totalSleep = morning.stages.deep + morning.stages.rem + morning.stages.light + morning.stages.awake;
+  const seg = (m: number) => `${(m / totalSleep) * 100}%`;
+
+  const insights = buildInsights(morning, pet);
+
+  const ring = (pct: number, color: string) => {
+    const r = 46;
+    const c = 2 * Math.PI * r;
+    return (
+      <svg viewBox="0 0 120 120" className="h-32 w-32 -rotate-90">
+        <circle cx="60" cy="60" r={r} stroke="#E5E7EB" strokeWidth="10" fill="none" />
+        <circle cx="60" cy="60" r={r} stroke={color} strokeWidth="10" fill="none" strokeDasharray={`${c * pct} ${c}`} strokeLinecap="round" />
+      </svg>
+    );
+  };
+
+  return (
+    <main className="mx-auto max-w-[1100px] px-4 sm:px-6 py-8 md:py-12">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-[12px] uppercase tracking-widest text-zinc-500">Today’s read</div>
+          <h1 className="fraunces text-[32px] md:text-[40px] leading-[1.1]">How {pet.name} is actually doing</h1>
+          <div className="mt-1 text-[13px] text-zinc-600 capitalize">
+            <span className={`inline-block h-2 w-2 rounded-full align-middle ${meta.dot}`} /> <b className="text-zinc-800">{mood}</b> · overall {score} · {morning.feeling} morning
+          </div>
+        </div>
+        <button onClick={onBack} className="hidden md:inline-flex rounded-full border border-zinc-200 bg-white/70 px-3 py-1.5 text-[13px] hover:bg-white">Back to home</button>
+      </div>
+
+      <div className="mt-6 grid lg:grid-cols-[1fr_1fr] gap-5">
+        {/* Sleep card */}
+        <section className="rounded-[28px] border border-white/70 bg-white/70 backdrop-blur-2xl shadow-[0_20px_60px_rgba(16,24,40,0.08)] p-5 md:p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 grid place-items-center rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100">😴</div>
+              <div>
+                <div className="text-[13px] text-zinc-500">Last night</div>
+                <div className="fraunces text-[24px] leading-none">{formatSleep(morning.sleepMinutes)}</div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-[11px] uppercase tracking-wide text-zinc-500">Score</div>
+              <div className="text-[22px] font-semibold" style={{ color: meta.color }}>{morning.sleepScore}</div>
+            </div>
+          </div>
+
+          <div className="mt-5 text-[12px] text-zinc-500">{morning.bedtime} → {morning.wakeTime}</div>
+          <div className="mt-2 flex h-3 overflow-hidden rounded-full bg-zinc-100">
+            <div className="h-full bg-indigo-600" style={{ width: seg(morning.stages.deep) }} title={`Deep ${morning.stages.deep}m`} />
+            <div className="h-full bg-indigo-400" style={{ width: seg(morning.stages.rem) }} title={`REM ${morning.stages.rem}m`} />
+            <div className="h-full bg-indigo-200" style={{ width: seg(morning.stages.light) }} title={`Light ${morning.stages.light}m`} />
+            <div className="h-full bg-zinc-300" style={{ width: seg(morning.stages.awake) }} title={`Awake ${morning.stages.awake}m`} />
+          </div>
+          <div className="mt-2 grid grid-cols-4 gap-2 text-[11px] text-zinc-600">
+            {[
+              { k: "Deep", v: morning.stages.deep, dot: "bg-indigo-600" },
+              { k: "REM", v: morning.stages.rem, dot: "bg-indigo-400" },
+              { k: "Light", v: morning.stages.light, dot: "bg-indigo-200" },
+              { k: "Awake", v: morning.stages.awake, dot: "bg-zinc-300" },
+            ].map((s) => (
+              <div key={s.k} className="flex items-center gap-1.5">
+                <span className={`h-2 w-2 rounded-full ${s.dot}`} />
+                <span>{s.k}</span>
+                <span className="ml-auto tabular-nums text-zinc-500">{s.v}m</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-zinc-100 bg-white/70 p-3">
+              <div className="text-[11px] uppercase tracking-wide text-zinc-500">HRV</div>
+              <div className="mt-1 text-[20px] font-semibold">{morning.hrv} <span className="text-[12px] font-normal text-zinc-500">ms</span></div>
+            </div>
+            <div className="rounded-2xl border border-zinc-100 bg-white/70 p-3">
+              <div className="text-[11px] uppercase tracking-wide text-zinc-500">Resting HR</div>
+              <div className="mt-1 text-[20px] font-semibold">{morning.restingHr} <span className="text-[12px] font-normal text-zinc-500">bpm</span></div>
+            </div>
+          </div>
+        </section>
+
+        {/* Nutrition card */}
+        <section className="rounded-[28px] border border-white/70 bg-white/70 backdrop-blur-2xl shadow-[0_20px_60px_rgba(16,24,40,0.08)] p-5 md:p-6">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 grid place-items-center rounded-xl bg-rose-50 text-rose-700 border border-rose-100">🍎</div>
+            <div>
+              <div className="text-[13px] text-zinc-500">Nutrition today</div>
+              <div className="fraunces text-[22px] leading-none">Estimated from logs</div>
+            </div>
+          </div>
+
+          <div className="mt-5 flex items-center gap-5">
+            <div className="relative shrink-0">
+              {ring(calPct, "#E11D48")}
+              <div className="absolute inset-0 grid place-items-center">
+                <div className="text-center">
+                  <div className="text-[20px] font-semibold tabular-nums">{cals}</div>
+                  <div className="text-[11px] text-zinc-500">of {morning.calories.goal} kcal</div>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 space-y-3">
+              {[
+                { label: "Carbs", g: carbsG, color: "#F59E0B", target: 240 },
+                { label: "Protein", g: proteinG, color: "#10B981", target: 110 },
+                { label: "Fat", g: fatG, color: "#6366F1", target: 70 },
+              ].map((r) => (
+                <div key={r.label}>
+                  <div className="flex items-center justify-between text-[12px]">
+                    <span className="text-zinc-700">{r.label}</span>
+                    <span className="tabular-nums text-zinc-500">{r.g}g <span className="opacity-60">/ {r.target}g</span></span>
+                  </div>
+                  <div className="mt-1 h-2 overflow-hidden rounded-full bg-zinc-100">
+                    <div className="h-full rounded-full" style={{ width: `${Math.min(100, (r.g / r.target) * 100)}%`, background: r.color }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <p className="mt-4 text-[12px] text-zinc-500">Estimated from meal photos you’ve logged. We don’t count calories at you — just translate them.</p>
+        </section>
+
+        {/* Movement card */}
+        <section className="rounded-[28px] border border-white/70 bg-white/70 backdrop-blur-2xl shadow-[0_20px_60px_rgba(16,24,40,0.08)] p-5 md:p-6">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 grid place-items-center rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100">🏃</div>
+            <div>
+              <div className="text-[13px] text-zinc-500">Movement</div>
+              <div className="fraunces text-[22px] leading-none">So far today</div>
+            </div>
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-zinc-100 bg-white/70 p-4">
+              <div className="text-[11px] uppercase tracking-wide text-zinc-500">Steps</div>
+              <div className="mt-1 text-[26px] font-semibold tabular-nums">{morning.steps.toLocaleString()}</div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-100">
+                <div className="h-full bg-emerald-500" style={{ width: `${Math.min(100, (morning.steps / 8000) * 100)}%` }} />
+              </div>
+              <div className="mt-1 text-[11px] text-zinc-500">of 8,000 goal</div>
+            </div>
+            <div className="rounded-2xl border border-zinc-100 bg-white/70 p-4">
+              <div className="text-[11px] uppercase tracking-wide text-zinc-500">Active minutes</div>
+              <div className="mt-1 text-[26px] font-semibold tabular-nums">{morning.activeMinutes}</div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-100">
+                <div className="h-full bg-emerald-500" style={{ width: `${Math.min(100, (morning.activeMinutes / 30) * 100)}%` }} />
+              </div>
+              <div className="mt-1 text-[11px] text-zinc-500">of 30-min target</div>
+            </div>
+          </div>
+        </section>
+
+        {/* Personalized analysis */}
+        <section className="rounded-[28px] border border-white/70 bg-gradient-to-br from-white/80 to-white/60 backdrop-blur-2xl shadow-[0_20px_60px_rgba(16,24,40,0.08)] p-5 md:p-6">
+          <div className="flex items-center gap-3">
+            <img src={petImage(pet.species, mood)} alt="" className="h-10 w-10 object-contain" style={{ imageRendering: "pixelated" }} />
+            <div>
+              <div className="text-[13px] text-zinc-500">{pet.name}’s read</div>
+              <div className="fraunces text-[22px] leading-none">Personalized analysis</div>
+            </div>
+          </div>
+
+          <ul className="mt-4 space-y-3">
+            {insights.map((i) => (
+              <li key={i.title} className="rounded-2xl border border-zinc-100 bg-white/80 p-3.5">
+                <div className="text-[13px] font-semibold">{i.title}</div>
+                <div className="mt-1 text-[13px] leading-5 text-zinc-600">{i.body}</div>
+              </li>
+            ))}
+          </ul>
+
+          <p className="mt-4 text-[11px] text-zinc-500">Read, not verdict. Your pet notices — it doesn’t judge.</p>
+        </section>
+      </div>
+
+      <div className="mt-6 md:hidden">
+        <button onClick={onBack} className="w-full rounded-full border border-zinc-200 bg-white/80 px-3 py-2.5 text-[14px] hover:bg-white">Back to home</button>
+      </div>
+    </main>
+  );
+}
+
 export default function App() {
   const [onboarded, setOnboarded] = useState(false);
   const [step, setStep] = useState(1);
@@ -156,6 +513,8 @@ export default function App() {
     waterToday: 44,
     waterGoal: 64,
   });
+  const [morning, setMorning] = useState<MorningData | null>(null);
+  const [view, setView] = useState<"home" | "detail">("home");
   const [showCheckin, setShowCheckin] = useState<null | "meal" | "water" | "sleep">(null);
   const [toast, setToast] = useState<string | null>(null);
   const [mealImage, setMealImage] = useState<string | null>(null);
@@ -199,18 +558,47 @@ export default function App() {
   };
 
   useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10);
+
+    let loadedPet: PetData | null = null;
+    let loadedOnboarded = false;
     const saved = localStorage.getItem("pethealth:v1");
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed?.pet && !(parsed.pet.species in SPECIES)) {
+        if (parsed?.pet && parsed.pet.species in SPECIES) {
+          loadedPet = parsed.pet;
+          loadedOnboarded = !!parsed.onboarded;
+        } else {
           localStorage.removeItem("pethealth:v1");
-          return;
         }
-        setPet(parsed.pet);
-        setOnboarded(parsed.onboarded);
       } catch {}
     }
+
+    let m: MorningData | null = null;
+    const savedMorning = localStorage.getItem("pethealth:morning");
+    if (savedMorning) {
+      try {
+        const parsed = JSON.parse(savedMorning);
+        if (parsed?.date === today) m = parsed;
+      } catch {}
+    }
+
+    if (!m) {
+      m = generateMorning(today);
+      localStorage.setItem("pethealth:morning", JSON.stringify(m));
+      if (loadedPet) {
+        loadedPet = {
+          ...loadedPet,
+          scores: { food: 48, sleep: m.sleepScore, water: 22, move: Math.min(40, Math.round(m.activeMinutes * 2.5)), calm: m.calmScore },
+          waterToday: 0,
+        };
+      }
+    }
+
+    if (loadedPet) setPet(loadedPet);
+    setOnboarded(loadedOnboarded);
+    setMorning(m);
   }, []);
 
   useEffect(() => {
@@ -223,14 +611,33 @@ export default function App() {
 
   const voice = useMemo(() => {
     const s = pet.scores;
+    if (morning?.feeling === "stressed" && s.calm < 55) return `Your HRV was ${morning.hrv}ms — low side. Let’s breathe first, plan second.`;
+    if (morning?.feeling === "groggy") return `Only ${formatSleep(morning.sleepMinutes)} last night. Go easy — light walk before coffee?`;
     if (s.sleep < 50) return "I slept a little sideways last night… gentle morning?";
     if (s.water < 50) return "My skin feels papery. Could we sip some water together?";
     if (s.food < 45) return "That last meal sat heavy. No stress — we’ll balance it.";
+    if (morning?.feeling === "rested") return `${formatSleep(morning.sleepMinutes)} of sleep and HRV up to ${morning.hrv} — we’ve got a good one today.`;
     if (pet.streak >= 7) return `Day ${pet.streak}. I'm proud of us. Little steps count.`;
     if (mood === "Thriving") return "I feel light today. Want to do something just for fun?";
     if (mood === "Critical") return "I'm not okay right now. Can we slow down and call the vet plan?";
     return "Morning. What’s one kind thing we can do for our body today?";
-  }, [pet.scores, pet.streak, mood]);
+  }, [pet.scores, pet.streak, mood, morning]);
+
+  const plan = useMemo<PlanItem[]>(() => PLANS[morning?.feeling ?? "okay"], [morning]);
+
+  const simulateNewDay = () => {
+    const nextDate = morning ? new Date(new Date(morning.date).getTime() + 86_400_000).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
+    const m = generateMorning(nextDate);
+    localStorage.setItem("pethealth:morning", JSON.stringify(m));
+    setMorning(m);
+    setPet((p) => ({
+      ...p,
+      scores: { food: 48, sleep: m.sleepScore, water: 22, move: Math.min(40, Math.round(m.activeMinutes * 2.5)), calm: m.calmScore },
+      waterToday: 0,
+    }));
+    setToast(`New morning · ${m.feeling}`);
+    setTimeout(() => setToast(null), 1800);
+  };
 
   const progressWater = Math.min(1, pet.waterToday / pet.waterGoal);
 
@@ -368,21 +775,35 @@ export default function App() {
       {/* top bar */}
       <div className="sticky top-0 z-30 backdrop-blur-xl bg-white/50 border-b border-white/60">
         <div className="mx-auto max-w-[1100px] px-4 sm:px-6 h-[60px] flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-xl bg-white shadow grid place-items-center">🫧</div>
-            <div className="fraunces text-[20px] leading-none">PetHealth</div>
-            <span className="ml-2 hidden sm:inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 text-[11px] border border-zinc-200">
-              <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
-              {mood} · {score}
-            </span>
-          </div>
+          {view === "home" ? (
+            <div className="flex items-center gap-2.5">
+              <div className="h-8 w-8 rounded-xl bg-white shadow grid place-items-center">🫧</div>
+              <div className="fraunces text-[20px] leading-none">PetHealth</div>
+              <span className="ml-2 hidden sm:inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 text-[11px] border border-zinc-200">
+                <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
+                {mood} · {score}
+              </span>
+            </div>
+          ) : (
+            <button onClick={() => setView("home")} className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white/80 px-3 py-1.5 text-[13px] hover:bg-white">
+              <span aria-hidden>←</span>
+              <span>Back</span>
+            </button>
+          )}
           <div className="flex items-center gap-2">
-            <button onClick={() => nudge({ sleep: -8, food: -6 })} className="hidden sm:inline-flex rounded-full border border-zinc-200 bg-white/70 px-3 py-1.5 text-xs hover:bg-white">simulate rough night</button>
+            {view === "home" && (
+              <button onClick={simulateNewDay} className="hidden sm:inline-flex rounded-full border border-zinc-200 bg-white/70 px-3 py-1.5 text-xs hover:bg-white">simulate new morning</button>
+            )}
             <button onClick={() => setOnboarded(false)} className="rounded-full border border-zinc-200 bg-white/70 px-3 py-1.5 text-xs hover:bg-white">reset</button>
           </div>
         </div>
       </div>
 
+      {view === "detail" && morning && (
+        <DetailView pet={pet} morning={morning} mood={mood} score={score} meta={meta} onBack={() => setView("home")} />
+      )}
+
+      {view === "home" && (
       <main className="mx-auto max-w-[1100px] px-4 sm:px-6 py-8 md:py-12">
         {/* hero */}
         <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-8 items-start">
@@ -414,9 +835,17 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="mt-6">
+              <button
+                type="button"
+                onClick={() => setView("detail")}
+                aria-label={`See ${pet.name}'s health details`}
+                className="mt-6 block w-full rounded-[24px] transition hover:-translate-y-0.5 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20"
+              >
                 <Pet species={pet.species} mood={mood} />
-              </div>
+                <div className="mx-auto mt-1 w-fit rounded-full bg-white/70 border border-zinc-200 px-2.5 py-0.5 text-[11px] text-zinc-600">
+                  Tap {pet.name} for today’s breakdown →
+                </div>
+              </button>
 
               <div className="mx-auto -mt-2 max-w-[420px]">
                 <div className="relative rounded-[20px] bg-white px-4 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.06)] border border-zinc-100">
@@ -484,22 +913,26 @@ export default function App() {
             </div>
 
             <div className="rounded-[28px] border border-white/70 bg-white/65 backdrop-blur-2xl shadow-[0_20px_60px_rgba(16,24,40,0.08)] p-5">
-              <div className="text-[13px] text-zinc-500">Today’s gentle plan</div>
+              <div className="flex items-center justify-between">
+                <div className="text-[13px] text-zinc-500">Today’s gentle plan</div>
+                {morning && (
+                  <div className="text-[11px] rounded-full bg-white/80 border border-zinc-200 px-2 py-0.5 capitalize text-zinc-600">
+                    {morning.feeling} morning
+                  </div>
+                )}
+              </div>
               <ul className="mt-2 space-y-2 text-[14px]">
-                <li className="flex items-center justify-between rounded-xl border border-zinc-100 bg-white/70 px-3 py-2">
-                  <span>Morning light · 5 min</span>
-                  <button onClick={() => nudge({ sleep: 3, calm: 2 })} className="text-xs rounded-full border border-zinc-200 px-2.5 py-1 hover:bg-zinc-50">Done</button>
-                </li>
-                <li className="flex items-center justify-between rounded-xl border border-zinc-100 bg-white/70 px-3 py-2">
-                  <span>Protein at lunch</span>
-                  <button onClick={() => nudge({ food: 4 })} className="text-xs rounded-full border border-zinc-200 px-2.5 py-1 hover:bg-zinc-50">Done</button>
-                </li>
-                <li className="flex items-center justify-between rounded-xl border border-zinc-100 bg-white/70 px-3 py-2">
-                  <span>Walk after dinner</span>
-                  <button onClick={() => nudge({ move: 5 })} className="text-xs rounded-full border border-zinc-200 px-2.5 py-1 hover:bg-zinc-50">Done</button>
-                </li>
+                {plan.map((item) => (
+                  <li key={item.label} className="flex items-center justify-between gap-3 rounded-xl border border-zinc-100 bg-white/70 px-3 py-2">
+                    <div className="min-w-0">
+                      <div className="truncate">{item.label}</div>
+                      <div className="text-[11px] text-zinc-500 truncate">{item.detail}</div>
+                    </div>
+                    <button onClick={() => nudge(item.delta)} className="shrink-0 text-xs rounded-full border border-zinc-200 px-2.5 py-1 hover:bg-zinc-50">Done</button>
+                  </li>
+                ))}
               </ul>
-              <p className="mt-3 text-[12px] text-zinc-500">Tiny actions, no streak pressure. Your pet reflects, never scolds.</p>
+              <p className="mt-3 text-[12px] text-zinc-500">Plan shifts with how you slept — no streak pressure.</p>
             </div>
 
             <div className="rounded-[28px] border border-white/70 bg-white/60 backdrop-blur-2xl p-5">
@@ -565,6 +998,7 @@ export default function App() {
           </div>
         </div>
       </main>
+      )}
 
       {/* check-in sheet */}
       {showCheckin && (

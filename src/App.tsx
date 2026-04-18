@@ -77,6 +77,25 @@ type MealAnalysis = {
   reactionKey: PetImageKey;
 };
 
+type MealLog = {
+  id: string;
+  timestamp: number;
+  image: string;
+  analysis: MealAnalysis;
+  macros: { calories: number; carbs: number; protein: number; fat: number };
+};
+
+function estimateMacros(tone: MealTone, seed: number): MealLog["macros"] {
+  const jitter = (base: number, range: number) => base + ((seed % (range * 2 + 1)) - range);
+  if (tone === "approve") {
+    return { calories: jitter(460, 60), carbs: jitter(48, 6), protein: jitter(26, 4), fat: jitter(18, 3) };
+  }
+  if (tone === "neutral") {
+    return { calories: jitter(620, 70), carbs: jitter(72, 8), protein: jitter(30, 5), fat: jitter(22, 4) };
+  }
+  return { calories: jitter(840, 90), carbs: jitter(96, 10), protein: jitter(28, 4), fat: jitter(40, 6) };
+}
+
 const SPECIES: Record<Species, { label: string; color: string; images: Record<PetImageKey, string> }> = {
   fox: {
     label: "Fox",
@@ -510,6 +529,133 @@ function DetailView({ pet, morning, mood, score, meta, onBack }: { pet: PetData;
   );
 }
 
+const MEAL_TONE_UI: Record<MealTone, { bg: string; border: string; text: string; chip: string; dot: string; label: string }> = {
+  approve: { bg: "bg-emerald-50", border: "border-emerald-100", text: "text-emerald-900", chip: "bg-emerald-500", dot: "bg-emerald-500", label: "Pet approved" },
+  neutral: { bg: "bg-sky-50", border: "border-sky-100", text: "text-sky-900", chip: "bg-sky-500", dot: "bg-sky-500", label: "Steady fuel" },
+  warn: { bg: "bg-amber-50", border: "border-amber-100", text: "text-amber-900", chip: "bg-amber-500", dot: "bg-amber-500", label: "Heavy — side-eye" },
+};
+
+function formatMealTime(ts: number) {
+  const d = new Date(ts);
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  const yest = new Date(now); yest.setDate(now.getDate() - 1);
+  const isYesterday = d.toDateString() === yest.toDateString();
+  const time = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  if (sameDay) return `Today · ${time}`;
+  if (isYesterday) return `Yesterday · ${time}`;
+  return `${d.toLocaleDateString([], { month: "short", day: "numeric" })} · ${time}`;
+}
+
+function MealsView({ pet, meals, onBack }: { pet: PetData; meals: MealLog[]; onBack: () => void }) {
+  const totals = meals.reduce(
+    (acc, m) => ({
+      calories: acc.calories + m.macros.calories,
+      carbs: acc.carbs + m.macros.carbs,
+      protein: acc.protein + m.macros.protein,
+      fat: acc.fat + m.macros.fat,
+    }),
+    { calories: 0, carbs: 0, protein: 0, fat: 0 },
+  );
+  const approveCount = meals.filter((m) => m.analysis.tone === "approve").length;
+  const warnCount = meals.filter((m) => m.analysis.tone === "warn").length;
+
+  return (
+    <main className="mx-auto max-w-[1100px] px-4 sm:px-6 py-8 md:py-12">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-[12px] uppercase tracking-widest text-zinc-500">Meal history</div>
+          <h1 className="fraunces text-[32px] md:text-[40px] leading-[1.1]">What you’ve been feeding {pet.name}</h1>
+          <div className="mt-1 text-[13px] text-zinc-600">
+            {meals.length} logged · <span className="text-emerald-700">{approveCount} approved</span>
+            {warnCount > 0 && <> · <span className="text-amber-700">{warnCount} heavy</span></>}
+          </div>
+        </div>
+        <button onClick={onBack} className="hidden md:inline-flex rounded-full border border-zinc-200 bg-white/70 px-3 py-1.5 text-[13px] hover:bg-white">Back to home</button>
+      </div>
+
+      {meals.length === 0 ? (
+        <div className="mt-8 rounded-[28px] border border-white/70 bg-white/70 backdrop-blur-2xl p-10 text-center">
+          <div className="text-[40px]">🍽️</div>
+          <h2 className="fraunces mt-2 text-[22px]">Nothing here yet</h2>
+          <p className="mt-1 text-[13px] text-zinc-600">Snap a photo from the home screen and your meals will show up here.</p>
+          <button onClick={onBack} className="mt-5 rounded-full bg-zinc-900 text-white px-4 py-2 text-sm hover:bg-zinc-800">Back to home</button>
+        </div>
+      ) : (
+        <>
+          <div className="mt-6 grid sm:grid-cols-4 gap-3">
+            {[
+              { k: "Calories", v: totals.calories, sub: "across all meals" },
+              { k: "Carbs", v: `${totals.carbs}g`, sub: "total" },
+              { k: "Protein", v: `${totals.protein}g`, sub: "total" },
+              { k: "Fat", v: `${totals.fat}g`, sub: "total" },
+            ].map((s) => (
+              <div key={s.k} className="rounded-2xl border border-white/70 bg-white/70 backdrop-blur-2xl p-4">
+                <div className="text-[11px] uppercase tracking-wide text-zinc-500">{s.k}</div>
+                <div className="mt-1 text-[22px] font-semibold tabular-nums">{s.v}</div>
+                <div className="text-[11px] text-zinc-500">{s.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 space-y-3">
+            {meals.map((m) => {
+              const t = MEAL_TONE_UI[m.analysis.tone];
+              const delta = `${m.analysis.foodDelta >= 0 ? "+" : ""}${m.analysis.foodDelta} food`;
+              return (
+                <article key={m.id} className={`rounded-[24px] border ${t.border} ${t.bg} p-4 md:p-5`}>
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <div className="relative shrink-0 h-32 w-full md:w-44 overflow-hidden rounded-2xl border border-white/70 bg-white">
+                      <img src={m.image} alt={m.analysis.label} className="h-full w-full object-cover" />
+                      <span className={`absolute bottom-2 left-2 rounded-full px-2 py-0.5 text-[11px] font-semibold text-white ${t.chip}`}>{delta}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-zinc-600">
+                        <span className={`h-2 w-2 rounded-full ${t.dot}`} />
+                        <span>{t.label}</span>
+                        <span className="opacity-40">·</span>
+                        <span className="normal-case tracking-normal">{formatMealTime(m.timestamp)}</span>
+                      </div>
+                      <div className={`mt-1 text-[17px] font-semibold ${t.text}`}>{m.analysis.label}</div>
+                      <div className="mt-1 flex items-start gap-2">
+                        <img
+                          src={SPECIES[pet.species].images[m.analysis.reactionKey]}
+                          alt=""
+                          className="h-7 w-7 object-contain shrink-0"
+                          style={{ imageRendering: "pixelated" }}
+                        />
+                        <p className={`text-[13px] italic ${t.text}`}>“{m.analysis.reaction}”</p>
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-4 gap-2">
+                        {[
+                          { k: "kcal", v: m.macros.calories },
+                          { k: "carbs", v: `${m.macros.carbs}g` },
+                          { k: "protein", v: `${m.macros.protein}g` },
+                          { k: "fat", v: `${m.macros.fat}g` },
+                        ].map((s) => (
+                          <div key={s.k} className="rounded-xl bg-white/70 border border-white/80 px-2.5 py-2">
+                            <div className="text-[10px] uppercase tracking-wide text-zinc-500">{s.k}</div>
+                            <div className="text-[14px] font-semibold tabular-nums text-zinc-900">{s.v}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      <div className="mt-6 md:hidden">
+        <button onClick={onBack} className="w-full rounded-full border border-zinc-200 bg-white/80 px-3 py-2.5 text-[14px] hover:bg-white">Back to home</button>
+      </div>
+    </main>
+  );
+}
+
 export default function App() {
   const [onboarded, setOnboarded] = useState(false);
   const [step, setStep] = useState(1);
@@ -524,7 +670,8 @@ export default function App() {
     waterGoal: 64,
   });
   const [morning, setMorning] = useState<MorningData | null>(null);
-  const [view, setView] = useState<"home" | "detail">("home");
+  const [view, setView] = useState<"home" | "detail" | "meals">("home");
+  const [meals, setMeals] = useState<MealLog[]>([]);
   const [showCheckin, setShowCheckin] = useState<null | "meal" | "water" | "sleep">(null);
   const [toast, setToast] = useState<string | null>(null);
   const [mealImage, setMealImage] = useState<string | null>(null);
@@ -580,8 +727,17 @@ export default function App() {
   };
 
   const applyMeal = () => {
-    if (!mealAnalysis) return;
+    if (!mealAnalysis || !mealImage) return;
     const { label, foodDelta } = mealAnalysis;
+    const now = Date.now();
+    const entry: MealLog = {
+      id: `${now}-${Math.random().toString(36).slice(2, 8)}`,
+      timestamp: now,
+      image: mealImage,
+      analysis: mealAnalysis,
+      macros: estimateMacros(mealAnalysis.tone, mealImage.length),
+    };
+    setMeals((prev) => [entry, ...prev].slice(0, 40));
     setPet((p) => ({ ...p, scores: { ...p.scores, food: Math.max(0, Math.min(100, p.scores.food + foodDelta)) } }));
     setToast(`${label} · ${foodDelta >= 0 ? "+" : ""}${foodDelta} food`);
     setTimeout(() => setToast(null), 1800);
@@ -630,11 +786,26 @@ export default function App() {
     if (loadedPet) setPet(loadedPet);
     setOnboarded(loadedOnboarded);
     setMorning(m);
+
+    const savedMeals = localStorage.getItem("pethealth:meals");
+    if (savedMeals) {
+      try {
+        const parsed = JSON.parse(savedMeals);
+        if (Array.isArray(parsed)) setMeals(parsed);
+      } catch {}
+    }
   }, []);
 
   useEffect(() => {
     localStorage.setItem("pethealth:v1", JSON.stringify({ pet, onboarded }));
   }, [pet, onboarded]);
+
+  useEffect(() => {
+    if (meals.length === 0) return;
+    try {
+      localStorage.setItem("pethealth:meals", JSON.stringify(meals));
+    } catch {}
+  }, [meals]);
 
   const score = overallScore(pet.scores);
   const mood = getMood(score);
@@ -845,6 +1016,10 @@ export default function App() {
         <DetailView pet={pet} morning={morning} mood={mood} score={score} meta={meta} onBack={() => setView("home")} />
       )}
 
+      {view === "meals" && (
+        <MealsView pet={pet} meals={meals} onBack={() => setView("home")} />
+      )}
+
       {view === "home" && (
       <main className="mx-auto max-w-[1100px] px-4 sm:px-6 py-8 md:py-12">
         {/* hero */}
@@ -986,6 +1161,47 @@ export default function App() {
               <div className="text-[13px] text-zinc-500">How this works</div>
               <p className="mt-1 text-[13px] leading-5 text-zinc-600">Your pet’s eyes mirror sleep, bounce mirrors movement, cracks appear when dry, color dulls after heavy meals. It’s a mirror—not a grade.</p>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setView("meals")}
+              className="group block w-full text-left rounded-[28px] border border-white/70 bg-white/70 backdrop-blur-2xl shadow-[0_20px_60px_rgba(16,24,40,0.06)] p-5 transition hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(16,24,40,0.10)] focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20"
+              aria-label="See meal history"
+            >
+              <div className="flex items-center justify-between">
+                <div className="text-[13px] text-zinc-500">Recent meals</div>
+                <div className="text-[12px] text-zinc-500 group-hover:text-zinc-700">See history →</div>
+              </div>
+
+              {meals.length === 0 ? (
+                <div className="mt-3 rounded-2xl border border-dashed border-zinc-200 bg-white/60 px-3 py-5 text-center">
+                  <div className="text-[24px]">🍽️</div>
+                  <div className="mt-1 text-[13px] text-zinc-600">No meals logged yet</div>
+                  <div className="text-[11px] text-zinc-500">Tap “Log meal” to snap your first one.</div>
+                </div>
+              ) : (
+                <>
+                  <div className="mt-3 flex gap-2">
+                    {meals.slice(0, 4).map((m) => {
+                      const toneClr = m.analysis.tone === "approve" ? "bg-emerald-500" : m.analysis.tone === "warn" ? "bg-amber-500" : "bg-sky-500";
+                      const delta = `${m.analysis.foodDelta >= 0 ? "+" : ""}${m.analysis.foodDelta}`;
+                      return (
+                        <div key={m.id} className="relative flex-1 aspect-square overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50">
+                          <img src={m.image} alt="" className="h-full w-full object-cover" />
+                          <span className={`absolute bottom-1 left-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold text-white ${toneClr}`}>{delta}</span>
+                        </div>
+                      );
+                    })}
+                    {Array.from({ length: Math.max(0, 4 - meals.slice(0, 4).length) }).map((_, i) => (
+                      <div key={`empty-${i}`} className="flex-1 aspect-square rounded-xl border border-dashed border-zinc-200 bg-white/40" />
+                    ))}
+                  </div>
+                  <div className="mt-3 text-[12px] text-zinc-600">
+                    {meals.length} logged · latest <span className="capitalize">{meals[0].analysis.tone === "approve" ? "great choice" : meals[0].analysis.tone === "warn" ? "heavy — go easy" : "steady fuel"}</span>
+                  </div>
+                </>
+              )}
+            </button>
           </div>
         </div>
 

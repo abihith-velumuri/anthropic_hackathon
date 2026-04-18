@@ -67,6 +67,16 @@ type MorningData = {
 
 type PlanItem = { label: string; detail: string; delta: Partial<Scores> };
 
+type MealTone = "approve" | "neutral" | "warn";
+type MealAnalysis = {
+  label: string;
+  foodDelta: number;
+  note: string;
+  tone: MealTone;
+  reaction: string;
+  reactionKey: PetImageKey;
+};
+
 const SPECIES: Record<Species, { label: string; color: string; images: Record<PetImageKey, string> }> = {
   fox: {
     label: "Fox",
@@ -518,7 +528,7 @@ export default function App() {
   const [showCheckin, setShowCheckin] = useState<null | "meal" | "water" | "sleep">(null);
   const [toast, setToast] = useState<string | null>(null);
   const [mealImage, setMealImage] = useState<string | null>(null);
-  const [mealAnalysis, setMealAnalysis] = useState<null | { label: string; foodDelta: number; note: string }>(null);
+  const [mealAnalysis, setMealAnalysis] = useState<MealAnalysis | null>(null);
   const [mealAnalyzing, setMealAnalyzing] = useState(false);
 
   useEffect(() => {
@@ -536,10 +546,31 @@ export default function App() {
       setMealAnalysis(null);
       setMealAnalyzing(true);
       setTimeout(() => {
-        const picks = [
-          { label: "Looks balanced", foodDelta: 6, note: "Protein and fiber on the plate — your pet perks up." },
-          { label: "Feels light", foodDelta: 4, note: "Gentle on the system. A sip of water pairs well." },
-          { label: "Heavier side", foodDelta: 2, note: "Rich meal. A short walk after could help." },
+        const picks: MealAnalysis[] = [
+          {
+            label: "Looks balanced",
+            foodDelta: 6,
+            note: "Protein, fiber, and color on the plate.",
+            tone: "approve",
+            reaction: `${pet.name} is thrilled — this is the good stuff!`,
+            reactionKey: "thrive",
+          },
+          {
+            label: "Solid choice",
+            foodDelta: 4,
+            note: "Gentle on the system. A sip of water pairs well.",
+            tone: "neutral",
+            reaction: `${pet.name} nods along. Steady fuel.`,
+            reactionKey: "healthy",
+          },
+          {
+            label: "Heavy and processed",
+            foodDelta: -2,
+            note: "Heavy on fried or processed bits. Your pet wants a break.",
+            tone: "warn",
+            reaction: `${pet.name} is giving you side-eye. Maybe greens next?`,
+            reactionKey: "unwell",
+          },
         ];
         setMealAnalysis(picks[file.size % picks.length]);
         setMealAnalyzing(false);
@@ -552,7 +583,7 @@ export default function App() {
     if (!mealAnalysis) return;
     const { label, foodDelta } = mealAnalysis;
     setPet((p) => ({ ...p, scores: { ...p.scores, food: Math.max(0, Math.min(100, p.scores.food + foodDelta)) } }));
-    setToast(`${label} · +${foodDelta} food`);
+    setToast(`${label} · ${foodDelta >= 0 ? "+" : ""}${foodDelta} food`);
     setTimeout(() => setToast(null), 1800);
     setShowCheckin(null);
   };
@@ -1063,12 +1094,32 @@ export default function App() {
                       )}
                     </div>
 
-                    {mealAnalysis && !mealAnalyzing && (
-                      <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-2.5">
-                        <div className="text-[13px] font-medium text-emerald-900">{mealAnalysis.label} · +{mealAnalysis.foodDelta} food</div>
-                        <div className="mt-0.5 text-[12px] text-emerald-900/70">{mealAnalysis.note}</div>
-                      </div>
-                    )}
+                    {mealAnalysis && !mealAnalyzing && (() => {
+                      const tones: Record<MealTone, { bg: string; border: string; text: string; subtext: string; chipBg: string; ring: string }> = {
+                        approve: { bg: "bg-emerald-50", border: "border-emerald-100", text: "text-emerald-900", subtext: "text-emerald-900/70", chipBg: "bg-emerald-100", ring: "ring-emerald-200" },
+                        neutral: { bg: "bg-sky-50", border: "border-sky-100", text: "text-sky-900", subtext: "text-sky-900/70", chipBg: "bg-sky-100", ring: "ring-sky-200" },
+                        warn: { bg: "bg-amber-50", border: "border-amber-100", text: "text-amber-900", subtext: "text-amber-900/70", chipBg: "bg-amber-100", ring: "ring-amber-200" },
+                      };
+                      const t = tones[mealAnalysis.tone];
+                      const deltaStr = `${mealAnalysis.foodDelta >= 0 ? "+" : ""}${mealAnalysis.foodDelta} food`;
+                      return (
+                        <div className={`flex items-start gap-3 rounded-xl ${t.bg} border ${t.border} px-3 py-3`}>
+                          <div className={`relative shrink-0 h-14 w-14 rounded-2xl ${t.chipBg} ring-1 ${t.ring} grid place-items-center overflow-hidden`}>
+                            <img
+                              src={SPECIES[pet.species].images[mealAnalysis.reactionKey]}
+                              alt={`${pet.name} reacting`}
+                              className="h-12 w-12 object-contain"
+                              style={{ imageRendering: "pixelated" }}
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className={`text-[13px] font-semibold ${t.text}`}>{mealAnalysis.label} · {deltaStr}</div>
+                            <div className={`mt-0.5 text-[12px] ${t.subtext}`}>{mealAnalysis.note}</div>
+                            <div className={`mt-1.5 text-[12px] italic ${t.text}`}>“{mealAnalysis.reaction}”</div>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     <div className="flex gap-2">
                       <button

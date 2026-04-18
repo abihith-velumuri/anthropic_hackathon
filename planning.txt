@@ -1,0 +1,32 @@
+General Requirements/Information
+- Having a way to select whether someone has dietary restrictions or conditions and basing analysis on that
+- Having a score on how well you eat
+- Pull sleep data from Apple watch and make recomendations based on that (include time zones)
+- Take a pic of menu and it gives suggestions
+- Water reminder every hour
+
+Visual Elements:
+- Include an icon that rots or gets healthier based on the eating decisions that you make
+
+
+FINAL IDEA: 
+
+The central insight: make the pet a mirror, not a judge. When the pet suffers, users feel empathy, not shame. That's a completely different emotional register than calorie trackers that flash red at you.
+
+1. Expand the pet beyond food:
+The pet should react to your whole health picture, not just meals. Sleep deprivation makes it tired and droopy. Hydration affects its skin/texture. Exercise makes it energetic and bouncy. Stress (tracked via HRV or self-report) makes it anxious. This turns the pet into a genuine holistic health mirror rather than just a food logger.
+
+2. Give the pet a personality and memory:
+The pet should have a name you choose, a species/type you pick at onboarding, and — crucially — it should remember your patterns. "You always skip breakfast on Mondays" or "You've been doing great for 8 days straight." This transforms it from a status indicator into a companion with a relationship arc.
+
+3. Add a social/multiplayer layer:
+Let users add friends and see each other's pets. A sick pet is visible to your friends — that social accountability is enormously powerful. You could also do "pet playdates" where two healthy pets interact, gamifying the social dynamic without it feeling punitive.
+
+4. Build a progression and evolution system:
+The pet shouldn't just get sick or healthy — it should evolve. Hit 30 days of strong habits and it grows, changes form, unlocks new animations or environments. This borrows directly from what made Pokémon and Tamagotchi compelling: long-term investment with visible milestones.
+
+5. AI coach through the pet's voice:
+Instead of a generic coach chatbot, all nutritional advice comes from the pet itself — in its personality, in its voice. "I'm feeling a little sluggish today... maybe some greens would perk me up?" This keeps the AI layer emotionally consistent with the core mechanic rather than feeling bolted on.
+
+6. The "pet vet" intervention system:
+When the pet gets critically ill, instead of a dead end, trigger a "vet visit" — a short, compassionate AI coaching session that builds a recovery plan. Framing a reset as saving your pet rather than failing your diet completely changes the emotional stakes.

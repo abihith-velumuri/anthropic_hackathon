@@ -1055,7 +1055,7 @@ export default function App() {
 
   const completePlanItem = (item: PlanItem) => {
     if (completedPlan.includes(item.label)) return;
-    nudge(item.delta);
+    nudge({ food: 10, sleep: 10, water: 10, move: 10, calm: 10 });
     setCompletedPlan((prev) => [...prev, item.label]);
   };
 

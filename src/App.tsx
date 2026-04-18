@@ -1132,7 +1132,7 @@ export default function App() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="h-9 w-9 rounded-2xl bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)] grid place-items-center">🫧</div>
-              <div className="font-[Fraunces] text-[22px] tracking-tight">PetHealth</div>
+              <div className="font-[Fraunces] text-[22px] tracking-tight">Vivo</div>
             </div>
             <div className="text-xs text-zinc-500">Mirrors, not judges</div>
           </div>
@@ -1244,7 +1244,7 @@ export default function App() {
           {view === "home" ? (
             <div className="flex items-center gap-2.5">
               <div className="h-8 w-8 rounded-xl bg-white shadow grid place-items-center">🫧</div>
-              <div className="fraunces text-[20px] leading-none">PetHealth</div>
+              <div className="fraunces text-[20px] leading-none">Vivo</div>
               <span className="ml-2 hidden sm:inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 text-[11px] border border-zinc-200">
                 <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
                 {mood} · {score}

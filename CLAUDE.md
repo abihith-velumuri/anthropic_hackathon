@@ -12,7 +12,7 @@ No test runner, linter, or formatter is configured. Type checking happens implic
 
 ## Architecture
 
-This is a hackathon mockup of **PetHealth** — a health-tracking app where a virtual pet mirrors the user's habits (food / sleep / water / movement / calm). The design thesis (see [planning.txt](planning.txt)) is "mirror, not judge": the pet's appearance reflects the user's state rather than scoring or shaming them.
+This is a hackathon mockup of **Vivo** — a health-tracking app where a virtual pet mirrors the user's habits (food / sleep / water / movement / calm). The design thesis (see [planning.txt](planning.txt)) is "mirror, not judge": the pet's appearance reflects the user's state rather than scoring or shaming them.
 
 **The entire app lives in [src/App.tsx](src/App.tsx).** That file contains:
 - Type definitions (`Species`, `Mood`, `Scores`, `PetData`, `Friend`)

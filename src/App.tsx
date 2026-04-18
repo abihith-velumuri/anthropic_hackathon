@@ -147,6 +147,8 @@ function overallScore(s: Scores) {
   return Math.round(s.food * 0.35 + s.sleep * 0.25 + s.water * 0.2 + s.move * 0.15 + s.calm * 0.05);
 }
 
+const SLUGGISH_BASELINE: Scores = { food: 45, sleep: 45, water: 40, move: 42, calm: 48 };
+
 const MORNING_VARIANTS: Omit<MorningData, "date">[] = [
   {
     sleepMinutes: 7 * 60 + 42,
@@ -883,9 +885,9 @@ export default function App() {
     species: "rabbit",
     dietary: ["Vegetarian"],
     goals: ["Sleep better"],
-    scores: { food: 72, sleep: 58, water: 68, move: 61, calm: 74 },
-    streak: 8,
-    waterToday: 44,
+    scores: { ...SLUGGISH_BASELINE },
+    streak: 0,
+    waterToday: 0,
     waterGoal: 64,
   });
   const [morning, setMorning] = useState<MorningData | null>(null);
@@ -1088,6 +1090,38 @@ export default function App() {
     setPet((p) => ({ ...p, scores: { ...p.scores, ...Object.fromEntries(Object.entries(delta).map(([k, v]) => [k, Math.max(0, Math.min(100, (p.scores as any)[k] + (v as number)))])) } as Scores }));
   };
 
+  const boostHealth = () => {
+    nudge({ food: 10, sleep: 10, water: 10, move: 10, calm: 10 });
+    setToast("+10 health · all scores boosted");
+    setTimeout(() => setToast(null), 1600);
+  };
+
+  const handleReset = () => {
+    localStorage.removeItem("pethealth:v1");
+    localStorage.removeItem("pethealth:morning");
+    localStorage.removeItem("pethealth:meals");
+    setPet({
+      name: "Mochi",
+      species: "rabbit",
+      dietary: ["Vegetarian"],
+      goals: ["Sleep better"],
+      scores: { ...SLUGGISH_BASELINE },
+      streak: 0,
+      waterToday: 0,
+      waterGoal: 64,
+    });
+    setMeals([]);
+    setCompletedPlan([]);
+    setMorning(null);
+    setView("home");
+    setStep(1);
+    setShowCheckin(null);
+    setMealImage(null);
+    setMealAnalysis(null);
+    setMealAnalyzing(false);
+    setOnboarded(false);
+  };
+
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Onboarding
@@ -1173,14 +1207,14 @@ export default function App() {
             <div className="relative">
               <div className="absolute -inset-10 -z-10 bg-[radial-gradient(400px_240px_at_60%_40%,rgba(139,198,236,0.35),transparent)] blur-2xl" />
               <div className="rounded-[36px] bg-white/60 backdrop-blur-2xl border border-white/70 shadow-[0_30px_80px_rgba(16,24,40,0.12)] p-8">
-                <Pet species={pet.species} mood={getMood(overallScore(pet.scores))} />
-                <div className="mx-auto mt-4 max-w-[320px] rounded-2xl bg-white/80 px-4 py-3 text-center text-[14px] italic text-zinc-700 shadow-sm border border-zinc-100">“{voice}”</div>
+                <Pet species={pet.species} mood="Thriving" />
+                <div className="mx-auto mt-4 max-w-[320px] rounded-2xl bg-white/80 px-4 py-3 text-center text-[14px] italic text-zinc-700 shadow-sm border border-zinc-100">“I can’t wait to meet you — let’s take care of each other.”</div>
                 <div className="mt-6 grid grid-cols-4 gap-2">
                   {[
-                    { k: "Food", v: pet.scores.food },
-                    { k: "Sleep", v: pet.scores.sleep },
-                    { k: "Water", v: pet.scores.water },
-                    { k: "Move", v: pet.scores.move },
+                    { k: "Food", v: 82 },
+                    { k: "Sleep", v: 78 },
+                    { k: "Water", v: 74 },
+                    { k: "Move", v: 70 },
                   ].map((m) => (
                     <div key={m.k} className="rounded-xl bg-zinc-50 border border-zinc-100 p-3 text-center">
                       <div className="text-[11px] uppercase tracking-wide text-zinc-500">{m.k}</div>
@@ -1224,9 +1258,12 @@ export default function App() {
           )}
           <div className="flex items-center gap-2">
             {view === "home" && (
-              <button onClick={simulateNewDay} className="hidden sm:inline-flex rounded-full border border-zinc-200 bg-white/70 px-3 py-1.5 text-xs hover:bg-white">simulate new morning</button>
+              <>
+                <button onClick={boostHealth} className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800 px-3 py-1.5 text-xs hover:bg-emerald-100">+10 health</button>
+                <button onClick={simulateNewDay} className="hidden sm:inline-flex rounded-full border border-zinc-200 bg-white/70 px-3 py-1.5 text-xs hover:bg-white">simulate new morning</button>
+              </>
             )}
-            <button onClick={() => setOnboarded(false)} className="rounded-full border border-zinc-200 bg-white/70 px-3 py-1.5 text-xs hover:bg-white">reset</button>
+            <button onClick={handleReset} className="rounded-full border border-zinc-200 bg-white/70 px-3 py-1.5 text-xs hover:bg-white">reset</button>
           </div>
         </div>
       </div>

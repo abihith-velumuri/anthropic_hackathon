@@ -65,7 +65,7 @@ type MorningData = {
   macros: { carbs: number; protein: number; fat: number };
 };
 
-type PlanItem = { label: string; detail: string; delta: Partial<Scores> };
+type PlanItem = { label: string; detail: string; delta: Partial<Scores>; addresses: string; reasoning: string };
 
 type MealTone = "approve" | "neutral" | "warn";
 type MealAnalysis = {
@@ -238,24 +238,96 @@ function generateMorning(date: string): MorningData {
 
 const PLANS: Record<MorningFeeling, PlanItem[]> = {
   rested: [
-    { label: "Ride the good wave", detail: "20-min workout while energy is high", delta: { move: 7 } },
-    { label: "Veggie-forward lunch", detail: "Double the greens today", delta: { food: 6 } },
-    { label: "Keep the rhythm", detail: "Same bedtime tonight — don’t break it", delta: { sleep: 2, calm: 2 } },
+    {
+      label: "Ride the good wave",
+      detail: "20-min workout while energy is high",
+      delta: { move: 7 },
+      addresses: "High recovery capacity",
+      reasoning: "Elevated HRV and a low resting heart rate mean your autonomic nervous system has room to absorb training stress. Days like this are when you build fitness without digging a hole — skip intensity when you’re depleted, push it when you’re recovered.",
+    },
+    {
+      label: "Veggie-forward lunch",
+      detail: "Double the greens today",
+      delta: { food: 6 },
+      addresses: "Nutrient density",
+      reasoning: "Plant variety (aim for 30+ different plant foods weekly) correlates strongly with gut microbiome diversity, which in turn tracks with mood stability and immune function. A rested body also digests fiber-rich meals more comfortably.",
+    },
+    {
+      label: "Keep the rhythm",
+      detail: "Same bedtime tonight — don’t break it",
+      delta: { sleep: 2, calm: 2 },
+      addresses: "Circadian consistency",
+      reasoning: "The single biggest lever on tomorrow’s sleep is tonight’s bedtime regularity. A 60–90 minute shift can drop your next sleep score by 10–20 points — protect the good night you just had.",
+    },
   ],
   okay: [
-    { label: "Morning light · 5 min", detail: "Sunlight on your face before screens", delta: { sleep: 3, calm: 2 } },
-    { label: "Protein at lunch", detail: "Steadier energy into the afternoon", delta: { food: 4 } },
-    { label: "Walk after dinner", detail: "Ten minutes is enough", delta: { move: 5 } },
+    {
+      label: "Morning light · 5 min",
+      detail: "Sunlight on your face before screens",
+      delta: { sleep: 3, calm: 2 },
+      addresses: "Circadian alignment",
+      reasoning: "Outdoor light is roughly 10,000 lux versus ~500 lux from indoor lighting. Five to ten minutes within an hour of waking sets your suprachiasmatic nucleus — it advances melatonin tonight and improves how deep you go.",
+    },
+    {
+      label: "Protein at lunch",
+      detail: "Steadier energy into the afternoon",
+      delta: { food: 4 },
+      addresses: "Afternoon energy dip",
+      reasoning: "Lunches that clear 25–30g of protein stabilize blood sugar for the afternoon, reducing the 2–4pm dip behind most snack cravings. Eggs, chicken, Greek yogurt, lentils — they all count.",
+    },
+    {
+      label: "Walk after dinner",
+      detail: "Ten minutes is enough",
+      delta: { move: 5 },
+      addresses: "Post-meal glucose",
+      reasoning: "A 10-minute walk within 30 minutes of finishing dinner improves post-meal glucose response by 20–30% and speeds gastric emptying. That reduces reflux risk and cuts into the restless-sleep pattern that late, heavy meals cause.",
+    },
   ],
   groggy: [
-    { label: "Hydrate before coffee", detail: "16oz water first — it helps more than caffeine", delta: { water: 5 } },
-    { label: "Bright light walk · 5 min", detail: "Resets your circadian clock", delta: { sleep: 3, move: 2 } },
-    { label: "Protein-rich breakfast", detail: "Carbs alone will crash you by 10", delta: { food: 5 } },
+    {
+      label: "Hydrate before coffee",
+      detail: "16oz water first — it helps more than caffeine",
+      delta: { water: 5 },
+      addresses: "Overnight dehydration",
+      reasoning: "You lose 16–20oz of water overnight through respiration and skin. Caffeine is a mild diuretic — leading with it on an empty tank deepens the dehydration and makes the crash at 10am worse. Water first makes the caffeine work better anyway.",
+    },
+    {
+      label: "Bright light walk · 5 min",
+      detail: "Resets your circadian clock",
+      delta: { sleep: 3, move: 2 },
+      addresses: "Sleep debt",
+      reasoning: "Bright outdoor light early in the morning is the strongest alerting signal you have. It advances tonight’s melatonin release, helping you fall asleep earlier and start repaying the debt you accumulated last night.",
+    },
+    {
+      label: "Protein-rich breakfast",
+      detail: "Carbs alone will crash you by 10",
+      delta: { food: 5 },
+      addresses: "Blood sugar stability",
+      reasoning: "Short sleep elevates cortisol and drops insulin sensitivity the next day — a pure-carb breakfast on a bad night spikes you hard and crashes you harder. A protein-forward breakfast (25g+) buffers the whole curve.",
+    },
   ],
   stressed: [
-    { label: "4-7-8 breathing · 3 rounds", detail: "Your HRV is low — this nudges it up", delta: { calm: 6 } },
-    { label: "Screen-free lunch", detail: "Eat away from the desk", delta: { calm: 3, food: 2 } },
-    { label: "Gentle walk · 10 min", detail: "Movement, not intensity", delta: { move: 4, calm: 3 } },
+    {
+      label: "4-7-8 breathing · 3 rounds",
+      detail: "Your HRV is low — this nudges it up",
+      delta: { calm: 6 },
+      addresses: "Low vagal tone",
+      reasoning: "Extended exhales are a direct lever on vagal tone — the parasympathetic ‘brake’ on your nervous system. Inhale 4, hold 7, exhale 8. Three rounds measurably raises HRV within minutes, and it’s portable when your day is loud.",
+    },
+    {
+      label: "Screen-free lunch",
+      detail: "Eat away from the desk",
+      delta: { calm: 3, food: 2 },
+      addresses: "Sympathetic overload",
+      reasoning: "Eating while working keeps you in fight-or-flight mode, which suppresses digestion and skips the cognitive reset your brain actually needs. Twenty minutes away from screens is the cheapest stress intervention you have today.",
+    },
+    {
+      label: "Gentle walk · 10 min",
+      detail: "Movement, not intensity",
+      delta: { move: 4, calm: 3 },
+      addresses: "Cortisol clearance",
+      reasoning: "Low-intensity movement — the kind where you can still hold a conversation — clears circulating stress hormones without adding more load. A 10-minute walk drops cortisol 10–20%. High-intensity training on a stressed day usually backfires.",
+    },
   ],
 };
 
@@ -656,6 +728,153 @@ function MealsView({ pet, meals, onBack }: { pet: PetData; meals: MealLog[]; onB
   );
 }
 
+type CoachInsight = { title: string; body: string };
+
+function buildWins(pet: PetData, morning: MorningData): CoachInsight[] {
+  const out: CoachInsight[] = [];
+  if (morning.sleepScore >= 75) out.push({ title: `Strong sleep · ${formatSleep(morning.sleepMinutes)}`, body: `Sleep score of ${morning.sleepScore} is in a healthy range. This is the largest lever you have on recovery, mood, and cognition — you’re pulling it consistently.` });
+  if (morning.hrv >= 55) out.push({ title: `HRV in a healthy zone · ${morning.hrv}ms`, body: "Your autonomic nervous system is well-regulated. Whatever combination of sleep, movement, and stress management got you here is working." });
+  if (pet.scores.calm >= 70) out.push({ title: "Stress looks managed", body: "Calm score is high. Keep whatever you’re doing to regulate — breathing, outdoor time, clear boundaries — because low-stress days compound into better sleep and steadier mood." });
+  if (pet.streak >= 7) out.push({ title: `${pet.streak}-day streak`, body: "Consistency compounds. Most positive health outcomes come from showing up repeatedly over weeks, not from any single perfect day. This is how the curve bends." });
+  if (pet.scores.move >= 65) out.push({ title: "Movement is consistent", body: "You’re hitting regular activity. Daily movement is one of the most underrated inputs into mood, cardiovascular health, and sleep pressure." });
+  if (pet.scores.water >= 70) out.push({ title: "Hydration is on track", body: "Water score is solid. Staying ahead of thirst keeps energy, focus, and skin elasticity in a much better place than most people realize." });
+  if (out.length === 0) out.push({ title: "Starting fresh", body: "Early days. Show up for the small wins in today’s plan and we’ll compound from there — the first two weeks are about the habit, not the metrics." });
+  return out.slice(0, 4);
+}
+
+function buildImprovements(pet: PetData, morning: MorningData): CoachInsight[] {
+  const out: CoachInsight[] = [];
+  if (morning.sleepScore < 65) out.push({ title: `Short sleep · ${formatSleep(morning.sleepMinutes)}`, body: "Under 7 hours regularly costs you cognitive performance, mood regulation, and long-term metabolic health. This week, try adding 30 minutes — move bedtime, not wake time." });
+  if (morning.hrv < 45) out.push({ title: `HRV is low · ${morning.hrv}ms`, body: "Low HRV usually reflects accumulated stress, under-sleeping, or over-training. Today’s plan is biased toward down-regulation — the breathing work especially moves this number quickly." });
+  if (morning.stages.rem < 70) out.push({ title: `Low REM · ${morning.stages.rem} min`, body: "Healthy REM sits above 90 minutes. The usual culprits are late meals, alcohol in the evening, or an inconsistent bedtime. If this is a pattern worth watching, those are the first levers." });
+  if (pet.scores.water < 55) out.push({ title: "Hydration is behind", body: "Water score is low. Dehydration masks itself as fatigue, headache, and low mood — easy fix, hard to remember. Front-load water before lunch today." });
+  if (pet.scores.food < 55) out.push({ title: "Meal quality is drifting", body: "Food score is slipping. No crisis — just aim for one balanced plate today (protein + fiber + color). One good meal reliably shifts the next few choices." });
+  if (pet.scores.move < 50) out.push({ title: "Activity is light", body: "Movement score is low. Even a 15-minute walk today raises tomorrow’s sleep quality and cuts into the afternoon energy dip — small input, disproportionate payoff." });
+  if (out.length === 0) out.push({ title: "Nothing urgent today", body: "All your markers are in range. The job is maintenance — keep the rhythm and don’t let a good streak tempt you into over-optimizing." });
+  return out.slice(0, 4);
+}
+
+function CoachView({ pet, morning, mood, plan, completedPlan, onBack }: { pet: PetData; morning: MorningData; mood: Mood; plan: PlanItem[]; completedPlan: string[]; onBack: () => void }) {
+  const wins = buildWins(pet, morning);
+  const improvements = buildImprovements(pet, morning);
+  const score = overallScore(pet.scores);
+
+  return (
+    <main className="mx-auto max-w-[1100px] px-4 sm:px-6 py-8 md:py-12">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="text-[12px] uppercase tracking-widest text-zinc-500">Coach</div>
+          <h1 className="fraunces text-[32px] md:text-[40px] leading-[1.1]">How {pet.name} reads today</h1>
+          <div className="mt-1 text-[13px] text-zinc-600 capitalize">
+            <span className="inline-block h-2 w-2 rounded-full align-middle bg-zinc-400" /> <b className="text-zinc-800">{mood}</b> · overall {score} · {morning.feeling} morning
+          </div>
+        </div>
+        <button onClick={onBack} className="hidden md:inline-flex rounded-full border border-zinc-200 bg-white/70 px-3 py-1.5 text-[13px] hover:bg-white">Back to home</button>
+      </div>
+
+      {/* Morning snapshot */}
+      <section className="mt-6 rounded-[28px] border border-white/70 bg-white/70 backdrop-blur-2xl shadow-[0_20px_60px_rgba(16,24,40,0.08)] p-5 md:p-6">
+        <div className="flex items-center gap-4">
+          <img src={petImage(pet.species, mood)} alt="" className="h-14 w-14 object-contain shrink-0" style={{ imageRendering: "pixelated" }} />
+          <div className="min-w-0">
+            <div className="text-[13px] text-zinc-500">{pet.name}’s read</div>
+            <p className="mt-0.5 text-[14px] leading-6 text-zinc-800">
+              You slept {formatSleep(morning.sleepMinutes)} with an HRV of {morning.hrv}ms and resting HR at {morning.restingHr} bpm. That puts today in the <b className="capitalize">{morning.feeling}</b> bucket — the three actions below are shaped around that, not around a generic checklist.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <div className="mt-5 grid lg:grid-cols-2 gap-5">
+        {/* Wins */}
+        <section className="rounded-[28px] border border-emerald-100 bg-emerald-50/50 backdrop-blur-2xl p-5 md:p-6">
+          <div className="flex items-center gap-2 text-emerald-900">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            <div className="text-[11px] uppercase tracking-wide">What you’re doing well</div>
+          </div>
+          <ul className="mt-3 space-y-3">
+            {wins.map((w) => (
+              <li key={w.title} className="rounded-2xl bg-white/80 border border-emerald-100 p-3.5">
+                <div className="text-[14px] font-semibold text-emerald-900">{w.title}</div>
+                <div className="mt-1 text-[13px] leading-5 text-emerald-900/80">{w.body}</div>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* Improvements */}
+        <section className="rounded-[28px] border border-amber-100 bg-amber-50/50 backdrop-blur-2xl p-5 md:p-6">
+          <div className="flex items-center gap-2 text-amber-900">
+            <span className="h-2 w-2 rounded-full bg-amber-500" />
+            <div className="text-[11px] uppercase tracking-wide">What could improve</div>
+          </div>
+          <ul className="mt-3 space-y-3">
+            {improvements.map((w) => (
+              <li key={w.title} className="rounded-2xl bg-white/80 border border-amber-100 p-3.5">
+                <div className="text-[14px] font-semibold text-amber-900">{w.title}</div>
+                <div className="mt-1 text-[13px] leading-5 text-amber-900/80">{w.body}</div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+
+      {/* Plan with reasoning */}
+      <section className="mt-5 rounded-[28px] border border-white/70 bg-white/70 backdrop-blur-2xl shadow-[0_20px_60px_rgba(16,24,40,0.08)] p-5 md:p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-[13px] text-zinc-500">Why today’s plan</div>
+            <h2 className="fraunces text-[22px]">The three actions, explained</h2>
+          </div>
+          <div className="text-[11px] rounded-full bg-white/80 border border-zinc-200 px-2 py-0.5 capitalize text-zinc-600">
+            {morning.feeling} morning
+          </div>
+        </div>
+
+        <ol className="mt-4 space-y-3">
+          {plan.map((item, i) => {
+            const done = completedPlan.includes(item.label);
+            const deltaChips = Object.entries(item.delta).map(([k, v]) => `${k} ${(v as number) > 0 ? "+" : ""}${v}`);
+            return (
+              <li key={item.label} className={`rounded-2xl border ${done ? "border-emerald-100 bg-emerald-50/60" : "border-zinc-100 bg-white/80"} p-4`}>
+                <div className="flex items-start gap-3">
+                  <div className={`shrink-0 h-7 w-7 grid place-items-center rounded-full text-[12px] font-semibold ${done ? "bg-emerald-500 text-white" : "bg-zinc-900 text-white"}`}>
+                    {done ? "✓" : i + 1}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="text-[15px] font-semibold">{item.label}</div>
+                      <span className="inline-flex items-center rounded-full bg-zinc-100 border border-zinc-200 px-2 py-0.5 text-[11px] text-zinc-700">
+                        Addresses: {item.addresses}
+                      </span>
+                      {done && (
+                        <span className="inline-flex items-center rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[11px]">Done</span>
+                      )}
+                    </div>
+                    <div className="mt-0.5 text-[12px] text-zinc-500">{item.detail}</div>
+                    <p className="mt-2 text-[13px] leading-5 text-zinc-700">{item.reasoning}</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {deltaChips.map((d) => (
+                        <span key={d} className="inline-flex items-center rounded-md bg-zinc-50 border border-zinc-200 px-1.5 py-0.5 text-[11px] text-zinc-600 capitalize">{d}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+
+      <p className="mt-5 text-[12px] text-zinc-500">Your coach notices — it doesn’t scold. The plan shifts tomorrow if your morning data does.</p>
+
+      <div className="mt-6 md:hidden">
+        <button onClick={onBack} className="w-full rounded-full border border-zinc-200 bg-white/80 px-3 py-2.5 text-[14px] hover:bg-white">Back to home</button>
+      </div>
+    </main>
+  );
+}
+
 export default function App() {
   const [onboarded, setOnboarded] = useState(false);
   const [step, setStep] = useState(1);
@@ -670,7 +889,7 @@ export default function App() {
     waterGoal: 64,
   });
   const [morning, setMorning] = useState<MorningData | null>(null);
-  const [view, setView] = useState<"home" | "detail" | "meals">("home");
+  const [view, setView] = useState<"home" | "detail" | "meals" | "coach">("home");
   const [meals, setMeals] = useState<MealLog[]>([]);
   const [showCheckin, setShowCheckin] = useState<null | "meal" | "water" | "sleep">(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -1020,6 +1239,10 @@ export default function App() {
         <MealsView pet={pet} meals={meals} onBack={() => setView("home")} />
       )}
 
+      {view === "coach" && morning && (
+        <CoachView pet={pet} morning={morning} mood={mood} plan={plan} completedPlan={completedPlan} onBack={() => setView("home")} />
+      )}
+
       {view === "home" && (
       <main className="mx-auto max-w-[1100px] px-4 sm:px-6 py-8 md:py-12">
         {/* hero */}
@@ -1129,14 +1352,24 @@ export default function App() {
               </div>
             </div>
 
-            <div className="rounded-[28px] border border-white/70 bg-white/65 backdrop-blur-2xl shadow-[0_20px_60px_rgba(16,24,40,0.08)] p-5">
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => setView("coach")}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setView("coach"); } }}
+              className="group cursor-pointer rounded-[28px] border border-white/70 bg-white/65 backdrop-blur-2xl shadow-[0_20px_60px_rgba(16,24,40,0.08)] p-5 transition hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(16,24,40,0.10)] focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20"
+              aria-label="Open coach for plan rationale"
+            >
               <div className="flex items-center justify-between">
                 <div className="text-[13px] text-zinc-500">Today’s gentle plan</div>
-                {morning && (
-                  <div className="text-[11px] rounded-full bg-white/80 border border-zinc-200 px-2 py-0.5 capitalize text-zinc-600">
-                    {morning.feeling} morning
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  {morning && (
+                    <div className="text-[11px] rounded-full bg-white/80 border border-zinc-200 px-2 py-0.5 capitalize text-zinc-600">
+                      {morning.feeling} morning
+                    </div>
+                  )}
+                  <span className="text-[12px] text-zinc-500 group-hover:text-zinc-700">Open coach →</span>
+                </div>
               </div>
               <ul className="mt-2 space-y-2 text-[14px]">
                 {plan.filter((item) => !completedPlan.includes(item.label)).map((item) => (
@@ -1145,7 +1378,12 @@ export default function App() {
                       <div className="truncate">{item.label}</div>
                       <div className="text-[11px] text-zinc-500 truncate">{item.detail}</div>
                     </div>
-                    <button onClick={() => completePlanItem(item)} className="shrink-0 text-xs rounded-full border border-zinc-200 px-2.5 py-1 hover:bg-zinc-50">Done</button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); completePlanItem(item); }}
+                      className="shrink-0 text-xs rounded-full border border-zinc-200 bg-white px-2.5 py-1 hover:bg-zinc-50"
+                    >
+                      Done
+                    </button>
                   </li>
                 ))}
                 {plan.every((item) => completedPlan.includes(item.label)) && (
@@ -1154,7 +1392,7 @@ export default function App() {
                   </li>
                 )}
               </ul>
-              <p className="mt-3 text-[12px] text-zinc-500">Plan shifts with how you slept — no streak pressure.</p>
+              <p className="mt-3 text-[12px] text-zinc-500">Tap anywhere for the reasoning behind each action.</p>
             </div>
 
             <div className="rounded-[28px] border border-white/70 bg-white/60 backdrop-blur-2xl p-5">

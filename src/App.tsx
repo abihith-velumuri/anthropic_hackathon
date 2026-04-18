@@ -624,6 +624,17 @@ export default function App() {
   }, [pet.scores, pet.streak, mood, morning]);
 
   const plan = useMemo<PlanItem[]>(() => PLANS[morning?.feeling ?? "okay"], [morning]);
+  const [completedPlan, setCompletedPlan] = useState<string[]>([]);
+
+  useEffect(() => {
+    setCompletedPlan([]);
+  }, [morning?.date]);
+
+  const completePlanItem = (item: PlanItem) => {
+    if (completedPlan.includes(item.label)) return;
+    nudge(item.delta);
+    setCompletedPlan((prev) => [...prev, item.label]);
+  };
 
   const simulateNewDay = () => {
     const nextDate = morning ? new Date(new Date(morning.date).getTime() + 86_400_000).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
@@ -922,15 +933,20 @@ export default function App() {
                 )}
               </div>
               <ul className="mt-2 space-y-2 text-[14px]">
-                {plan.map((item) => (
+                {plan.filter((item) => !completedPlan.includes(item.label)).map((item) => (
                   <li key={item.label} className="flex items-center justify-between gap-3 rounded-xl border border-zinc-100 bg-white/70 px-3 py-2">
                     <div className="min-w-0">
                       <div className="truncate">{item.label}</div>
                       <div className="text-[11px] text-zinc-500 truncate">{item.detail}</div>
                     </div>
-                    <button onClick={() => nudge(item.delta)} className="shrink-0 text-xs rounded-full border border-zinc-200 px-2.5 py-1 hover:bg-zinc-50">Done</button>
+                    <button onClick={() => completePlanItem(item)} className="shrink-0 text-xs rounded-full border border-zinc-200 px-2.5 py-1 hover:bg-zinc-50">Done</button>
                   </li>
                 ))}
+                {plan.every((item) => completedPlan.includes(item.label)) && (
+                  <li className="rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-3 text-center text-[13px] text-emerald-800">
+                    All done for today. {pet.name} noticed. ✿
+                  </li>
+                )}
               </ul>
               <p className="mt-3 text-[12px] text-zinc-500">Plan shifts with how you slept — no streak pressure.</p>
             </div>

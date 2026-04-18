@@ -1,6 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-type Species = "slime" | "cat" | "dog" | "dragon";
+import foxThrive from "@/assets/pets/fox/thrive.png";
+import foxHealthy from "@/assets/pets/fox/healthy.png";
+import foxSluggish from "@/assets/pets/fox/sluggish.png";
+import foxUnwell from "@/assets/pets/fox/unwell.png";
+import rabbitThrive from "@/assets/pets/rabbit/thrive.png";
+import rabbitHealthy from "@/assets/pets/rabbit/healthy.png";
+import rabbitSluggish from "@/assets/pets/rabbit/sluggish.png";
+import rabbitUnwell from "@/assets/pets/rabbit/unwell.png";
+import hamsterThrive from "@/assets/pets/hamster/thrive.png";
+import hamsterHealthy from "@/assets/pets/hamster/healthy.png";
+import hamsterSluggish from "@/assets/pets/hamster/sluggish.png";
+import hamsterUnwell from "@/assets/pets/hamster/unwell.png";
+
+type Species = "fox" | "rabbit" | "hamster";
+type PetImageKey = "thrive" | "healthy" | "sluggish" | "unwell";
 type Mood = "Thriving" | "Healthy" | "Okay" | "Sluggish" | "Unwell" | "Critical";
 
 type Scores = {
@@ -32,12 +46,34 @@ type PetData = {
   waterGoal: number;
 };
 
-const SPECIES: Record<Species, { emoji: string; label: string; color: string }> = {
-  slime: { emoji: "🫧", label: "Slime", color: "#8BC6EC" },
-  cat: { emoji: "🐱", label: "Cat", color: "#F5C2A5" },
-  dog: { emoji: "🐶", label: "Dog", color: "#E1C699" },
-  dragon: { emoji: "🐉", label: "Dragon", color: "#B8A7E5" },
+const SPECIES: Record<Species, { label: string; color: string; images: Record<PetImageKey, string> }> = {
+  fox: {
+    label: "Fox",
+    color: "#F5C2A5",
+    images: { thrive: foxThrive, healthy: foxHealthy, sluggish: foxSluggish, unwell: foxUnwell },
+  },
+  rabbit: {
+    label: "Rabbit",
+    color: "#D9DEE6",
+    images: { thrive: rabbitThrive, healthy: rabbitHealthy, sluggish: rabbitSluggish, unwell: rabbitUnwell },
+  },
+  hamster: {
+    label: "Hamster",
+    color: "#E9C79A",
+    images: { thrive: hamsterThrive, healthy: hamsterHealthy, sluggish: hamsterSluggish, unwell: hamsterUnwell },
+  },
 };
+
+function moodToImageKey(mood: Mood): PetImageKey {
+  if (mood === "Thriving") return "thrive";
+  if (mood === "Healthy" || mood === "Okay") return "healthy";
+  if (mood === "Sluggish") return "sluggish";
+  return "unwell";
+}
+
+function petImage(species: Species, mood: Mood) {
+  return SPECIES[species].images[moodToImageKey(mood)];
+}
 
 const DIETARY = [
   "Vegetarian",
@@ -49,12 +85,12 @@ const DIETARY = [
 ];
 
 const FRIENDS: Friend[] = [
-  { id: "1", name: "Alex", pet: "Biscuit", species: "dog", mood: "Thriving", streak: 22, score: 92 },
-  { id: "2", name: "Jordan", pet: "Ember", species: "dragon", mood: "Healthy", streak: 6, score: 78 },
-  { id: "3", name: "Sam", pet: "Pixel", species: "slime", mood: "Sluggish", streak: 2, score: 52 },
-  { id: "4", name: "Casey", pet: "Luna", species: "cat", mood: "Okay", streak: 8, score: 64 },
-  { id: "5", name: "Riley", pet: "Tofu", species: "slime", mood: "Thriving", streak: 41, score: 94 },
-  { id: "6", name: "Morgan", pet: "Haku", species: "dragon", mood: "Healthy", streak: 15, score: 81 },
+  { id: "1", name: "Alex", pet: "Biscuit", species: "fox", mood: "Thriving", streak: 22, score: 92 },
+  { id: "2", name: "Jordan", pet: "Ember", species: "hamster", mood: "Healthy", streak: 6, score: 78 },
+  { id: "3", name: "Sam", pet: "Pixel", species: "rabbit", mood: "Sluggish", streak: 2, score: 52 },
+  { id: "4", name: "Casey", pet: "Luna", species: "rabbit", mood: "Okay", streak: 8, score: 64 },
+  { id: "5", name: "Riley", pet: "Tofu", species: "hamster", mood: "Thriving", streak: 41, score: 94 },
+  { id: "6", name: "Morgan", pet: "Haku", species: "fox", mood: "Healthy", streak: 15, score: 81 },
 ];
 
 function overallScore(s: Scores) {
@@ -82,106 +118,27 @@ function moodMeta(mood: Mood) {
   return map[mood];
 }
 
-function Pet({ species, scores, mood }: { species: Species; scores: Scores; mood: Mood }) {
-  const eyeOpen = Math.max(0.35, Math.min(1, scores.sleep / 100));
-  const bounce = 3.2 - (scores.move / 100) * 1.4;
-  const cracked = scores.water < 48;
-  const pale = scores.food < 42;
-
-  const base = SPECIES[species].color;
-  const color = pale ? "#CBD5E1" : base;
-
-  const eyeH = 14 * eyeOpen;
-
-  const mouth = useMemo(() => {
-    if (mood === "Thriving" || mood === "Healthy")
-      return <path d="M106 158 Q122 174 138 158" stroke="#2b2b2b" strokeWidth="3" fill="none" strokeLinecap="round" />;
-    if (mood === "Okay") return <line x1="110" y1="160" x2="134" y2="160" stroke="#2b2b2b" strokeWidth="3" strokeLinecap="round" />;
-    return <path d="M106 166 Q122 154 138 166" stroke="#2b2b2b" strokeWidth="3" fill="none" strokeLinecap="round" />;
-  }, [mood]);
+function Pet({ species, mood }: { species: Species; mood: Mood }) {
+  const color = SPECIES[species].color;
+  const src = petImage(species, mood);
+  const sparkle = mood === "Thriving" || mood === "Healthy";
 
   return (
     <div className="relative w-[260px] h-[260px] mx-auto">
       <div className="absolute inset-0 blur-3xl opacity-40" style={{ background: `radial-gradient(closest-side, ${color}, transparent)` }} />
-      <svg viewBox="0 0 244 244" className="relative w-full h-full drop-shadow-[0_20px_40px_rgba(0,0,0,0.08)]">
-        <defs>
-          <radialGradient id="body" cx="50%" cy="38%" r="70%">
-            <stop offset="0%" stopColor="white" stopOpacity="0.9" />
-            <stop offset="40%" stopColor={color} stopOpacity="0.95" />
-            <stop offset="100%" stopColor={color} stopOpacity="1" />
-          </radialGradient>
-          <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="8" result="b"/>
-            <feBlend in="SourceGraphic" in2="b" mode="normal"/>
-          </filter>
-        </defs>
-
-        {/* sparkles */}
-        {(mood === "Thriving" || mood === "Healthy") && (
-          <g opacity="0.9">
-            <circle cx="52" cy="68" r="3.2" fill="#FDE68A">
-              <animate attributeName="opacity" values="0.4;1;0.4" dur="2.2s" repeatCount="indefinite" />
-            </circle>
-            <circle cx="202" cy="82" r="2.4" fill="#FDE68A">
-              <animate attributeName="opacity" values="1;0.4;1" dur="1.8s" repeatCount="indefinite" />
-            </circle>
-            <circle cx="192" cy="176" r="3" fill="#FDE68A">
-              <animate attributeName="opacity" values="0.5;1;0.5" dur="2.6s" repeatCount="indefinite" />
-            </circle>
-          </g>
-        )}
-
-        {/* body variants */}
-        <g filter="url(#soft)">
-          {species === "slime" && (
-            <ellipse cx="122" cy="150" rx="74" ry="58" fill="url(#body)">
-              <animate attributeName="ry" values="58;62;58" dur={`${bounce}s`} repeatCount="indefinite" />
-            </ellipse>
-          )}
-          {species === "cat" && (
-            <>
-              <ellipse cx="122" cy="162" rx="64" ry="48" fill="url(#body)" />
-              <circle cx="122" cy="118" r="46" fill="url(#body)" />
-              <path d="M86 82l10 18 12-10z" fill={color} />
-              <path d="M158 82l-10 18-12-10z" fill={color} />
-            </>
-          )}
-          {species === "dog" && (
-            <>
-              <ellipse cx="122" cy="164" rx="68" ry="52" fill="url(#body)" />
-              <circle cx="122" cy="116" r="48" fill="url(#body)" />
-              <ellipse cx="80" cy="116" rx="13" ry="22" fill={color} />
-              <ellipse cx="164" cy="116" rx="13" ry="22" fill={color} />
-            </>
-          )}
-          {species === "dragon" && (
-            <>
-              <ellipse cx="122" cy="164" rx="68" ry="52" fill="url(#body)" />
-              <circle cx="122" cy="116" r="46" fill="url(#body)" />
-              <path d="M96 78l12 16 12-12z" fill={color} />
-              <path d="M148 78l-12 16-12-12z" fill={color} />
-            </>
-          )}
-        </g>
-
-        {/* highlight */}
-        <ellipse cx="100" cy="126" rx="16" ry="9" fill="white" opacity="0.45" />
-
-        {/* cracks if dehydrated */}
-        {cracked && (
-          <g stroke="#8B8B8B" strokeWidth="1.2" opacity="0.45" fill="none">
-            <path d="M88 130 q6 10 12 18" />
-            <path d="M152 118 q6 12 10 18" />
-          </g>
-        )}
-
-        {/* eyes */}
-        <ellipse cx="104" cy="132" rx="5.5" ry={eyeH / 2} fill="#1f2937" />
-        <ellipse cx="140" cy="132" rx="5.5" ry={eyeH / 2} fill="#1f2937" />
-
-        {/* mouth */}
-        {mouth}
-      </svg>
+      {sparkle && (
+        <>
+          <span className="absolute left-[18%] top-[18%] h-1.5 w-1.5 rounded-full bg-yellow-300 animate-pulse" />
+          <span className="absolute right-[14%] top-[28%] h-1 w-1 rounded-full bg-yellow-300 animate-pulse" style={{ animationDelay: "0.4s" }} />
+          <span className="absolute right-[20%] bottom-[22%] h-1.5 w-1.5 rounded-full bg-yellow-300 animate-pulse" style={{ animationDelay: "0.8s" }} />
+        </>
+      )}
+      <img
+        src={src}
+        alt={`${SPECIES[species].label} feeling ${mood.toLowerCase()}`}
+        className="relative w-full h-full object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.08)]"
+        style={{ imageRendering: "pixelated" }}
+      />
     </div>
   );
 }
@@ -191,7 +148,7 @@ export default function App() {
   const [step, setStep] = useState(1);
   const [pet, setPet] = useState<PetData>({
     name: "Mochi",
-    species: "slime",
+    species: "rabbit",
     dietary: ["Vegetarian"],
     goals: ["Sleep better"],
     scores: { food: 72, sleep: 58, water: 68, move: 61, calm: 74 },
@@ -201,12 +158,55 @@ export default function App() {
   });
   const [showCheckin, setShowCheckin] = useState<null | "meal" | "water" | "sleep">(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [mealImage, setMealImage] = useState<string | null>(null);
+  const [mealAnalysis, setMealAnalysis] = useState<null | { label: string; foodDelta: number; note: string }>(null);
+  const [mealAnalyzing, setMealAnalyzing] = useState(false);
+
+  useEffect(() => {
+    if (showCheckin !== "meal") {
+      setMealImage(null);
+      setMealAnalysis(null);
+      setMealAnalyzing(false);
+    }
+  }, [showCheckin]);
+
+  const onMealFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setMealImage(reader.result as string);
+      setMealAnalysis(null);
+      setMealAnalyzing(true);
+      setTimeout(() => {
+        const picks = [
+          { label: "Looks balanced", foodDelta: 6, note: "Protein and fiber on the plate — your pet perks up." },
+          { label: "Feels light", foodDelta: 4, note: "Gentle on the system. A sip of water pairs well." },
+          { label: "Heavier side", foodDelta: 2, note: "Rich meal. A short walk after could help." },
+        ];
+        setMealAnalysis(picks[file.size % picks.length]);
+        setMealAnalyzing(false);
+      }, 1200);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const applyMeal = () => {
+    if (!mealAnalysis) return;
+    const { label, foodDelta } = mealAnalysis;
+    setPet((p) => ({ ...p, scores: { ...p.scores, food: Math.max(0, Math.min(100, p.scores.food + foodDelta)) } }));
+    setToast(`${label} · +${foodDelta} food`);
+    setTimeout(() => setToast(null), 1800);
+    setShowCheckin(null);
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem("pethealth:v1");
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+        if (parsed?.pet && !(parsed.pet.species in SPECIES)) {
+          localStorage.removeItem("pethealth:v1");
+          return;
+        }
         setPet(parsed.pet);
         setOnboarded(parsed.onboarded);
       } catch {}
@@ -285,7 +285,12 @@ export default function App() {
                           onClick={() => setPet((p) => ({ ...p, species: sp }))}
                           className={`group relative rounded-2xl border bg-white p-4 text-left transition hover:shadow-md ${pet.species === sp ? "border-zinc-900/20 ring-2 ring-zinc-900/10" : "border-zinc-200"}`}
                         >
-                          <div className="text-[28px]">{SPECIES[sp].emoji}</div>
+                          <img
+                            src={SPECIES[sp].images.thrive}
+                            alt={SPECIES[sp].label}
+                            className="h-12 w-12 object-contain"
+                            style={{ imageRendering: "pixelated" }}
+                          />
                           <div className="mt-1 font-medium">{SPECIES[sp].label}</div>
                           <div className="text-xs text-zinc-500">feels your habits</div>
                         </button>
@@ -329,7 +334,7 @@ export default function App() {
             <div className="relative">
               <div className="absolute -inset-10 -z-10 bg-[radial-gradient(400px_240px_at_60%_40%,rgba(139,198,236,0.35),transparent)] blur-2xl" />
               <div className="rounded-[36px] bg-white/60 backdrop-blur-2xl border border-white/70 shadow-[0_30px_80px_rgba(16,24,40,0.12)] p-8">
-                <Pet species={pet.species} scores={pet.scores} mood={getMood(overallScore(pet.scores))} />
+                <Pet species={pet.species} mood={getMood(overallScore(pet.scores))} />
                 <div className="mx-auto mt-4 max-w-[320px] rounded-2xl bg-white/80 px-4 py-3 text-center text-[14px] italic text-zinc-700 shadow-sm border border-zinc-100">“{voice}”</div>
                 <div className="mt-6 grid grid-cols-4 gap-2">
                   {[
@@ -389,7 +394,12 @@ export default function App() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h1 className="fraunces text-[32px] md:text-[40px] leading-[1.05]">{pet.name}</h1>
-                    <span className="text-2xl">{SPECIES[pet.species].emoji}</span>
+                    <img
+                      src={SPECIES[pet.species].images.thrive}
+                      alt={SPECIES[pet.species].label}
+                      className="h-8 w-8 object-contain"
+                      style={{ imageRendering: "pixelated" }}
+                    />
                   </div>
                   <div className="mt-1 flex items-center gap-2 text-[13px] text-zinc-600">
                     <span className={`inline-flex h-2 w-2 rounded-full ${meta.dot}`} />
@@ -405,7 +415,7 @@ export default function App() {
               </div>
 
               <div className="mt-6">
-                <Pet species={pet.species} scores={pet.scores} mood={mood} />
+                <Pet species={pet.species} mood={mood} />
               </div>
 
               <div className="mx-auto -mt-2 max-w-[420px]">
@@ -513,8 +523,13 @@ export default function App() {
                 return (
                   <div key={f.id} className="group relative shrink-0 w-[220px] rounded-[22px] border border-white/70 bg-white/70 backdrop-blur-xl p-4 shadow-[0_12px_30px_rgba(0,0,0,0.06)] hover:shadow-[0_18px_40px_rgba(0,0,0,0.08)] transition">
                     <div className="flex items-center gap-3">
-                      <div className="relative h-12 w-12 grid place-items-center rounded-2xl bg-zinc-50 border border-zinc-200">
-                        <span className="text-[26px]">{SPECIES[f.species].emoji}</span>
+                      <div className="relative h-12 w-12 grid place-items-center rounded-2xl bg-zinc-50 border border-zinc-200 overflow-hidden">
+                        <img
+                          src={petImage(f.species, f.mood)}
+                          alt={`${f.pet} the ${SPECIES[f.species].label}`}
+                          className="h-10 w-10 object-contain"
+                          style={{ imageRendering: "pixelated" }}
+                        />
                         <span className={`absolute -bottom-1 -right-1 h-3 w-3 rounded-full ring-2 ring-white ${fm.dot}`} title={f.mood} />
                       </div>
                       <div className="min-w-0">
@@ -565,12 +580,64 @@ export default function App() {
 
             {showCheckin === "meal" && (
               <div className="mt-3 space-y-3">
-                <input placeholder="What did you eat?" className="w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-[14px] outline-none focus:ring-2 focus:ring-zinc-900/10" />
-                <div className="grid grid-cols-3 gap-2">
-                  {["Balanced", "Light", "Heavy"].map((t) => (
-                    <button key={t} onClick={() => quickLog("meal")} className="rounded-xl border border-zinc-200 bg-white py-2 text-sm hover:bg-zinc-50">{t}</button>
-                  ))}
-                </div>
+                {!mealImage && (
+                  <label className="block cursor-pointer rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50/60 px-4 py-8 text-center hover:bg-zinc-50 transition">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="sr-only"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) onMealFile(f);
+                        e.target.value = "";
+                      }}
+                    />
+                    <div className="text-[28px]">📷</div>
+                    <div className="mt-2 text-[14px] font-medium">Snap or upload your meal</div>
+                    <div className="text-[12px] text-zinc-500">Your pet reads the plate — no typing required.</div>
+                  </label>
+                )}
+
+                {mealImage && (
+                  <>
+                    <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50">
+                      <img src={mealImage} alt="Your meal" className="h-44 w-full object-cover" />
+                      {mealAnalyzing && (
+                        <div className="absolute inset-0 grid place-items-center bg-white/60 backdrop-blur-sm">
+                          <div className="flex items-center gap-2 rounded-full bg-white/90 border border-zinc-200 px-3 py-1.5 text-[13px] shadow">
+                            <span className="h-2 w-2 rounded-full bg-zinc-900 animate-ping" />
+                            <span>Your pet is tasting…</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {mealAnalysis && !mealAnalyzing && (
+                      <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-2.5">
+                        <div className="text-[13px] font-medium text-emerald-900">{mealAnalysis.label} · +{mealAnalysis.foodDelta} food</div>
+                        <div className="mt-0.5 text-[12px] text-emerald-900/70">{mealAnalysis.note}</div>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { setMealImage(null); setMealAnalysis(null); setMealAnalyzing(false); }}
+                        className="flex-1 rounded-xl border border-zinc-200 bg-white py-2 text-sm hover:bg-zinc-50"
+                      >
+                        Retake
+                      </button>
+                      <button
+                        disabled={!mealAnalysis}
+                        onClick={applyMeal}
+                        className="flex-1 rounded-xl bg-zinc-900 text-white py-2 text-sm hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Log meal
+                      </button>
+                    </div>
+                  </>
+                )}
+
                 <p className="text-[12px] text-zinc-500">We don’t count calories. Your pet just notices how you feel after.</p>
               </div>
             )}
